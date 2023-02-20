@@ -6,6 +6,8 @@ public class PlayerScript : MonoBehaviour
 {
     [SerializeField] GameObject board;
     [SerializeField] float acceleration = 1f;
+    [SerializeField] float xSpeed = 1f;
+
     float currentSpeed = 0f;
 
     // [SerializeField] 
@@ -48,15 +50,31 @@ public class PlayerScript : MonoBehaviour
         board.transform.eulerAngles = new Vector3(0, 0, angle);
     }
 
+
+    float Sign(float x)
+    {
+        if (Mathf.Abs(x) == 90 || x == 0) return 0;
+        return Mathf.Sign(x);
+    }
+
     void Move()
     {
-        if (Mathf.Abs(angle) < 45)
+        if (Mathf.Abs(angle) == 90)
         {
-
+            currentSpeed = 0f;
+        }
+        else if (Mathf.Abs(angle) > 45)
+        {
+            // do not change speed or increase slightly after stop
+            if (currentSpeed == 0f)
+                currentSpeed = 1f;
+        }
+        else
+        {
+            currentSpeed += Time.deltaTime * acceleration;
         }
 
-        currentSpeed += Time.deltaTime * acceleration;
-        Vector3 transaltion = new Vector3(0, 0, 0) * Time.deltaTime;
+        Vector3 transaltion = new Vector3(Sign(angle) * xSpeed, -currentSpeed, 0) * Time.deltaTime;
         transform.Translate(transaltion, Space.World);
     }
 }
