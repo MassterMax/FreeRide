@@ -7,13 +7,15 @@ public class PlayerScript : MonoBehaviour
 {
     [SerializeField] GameObject board;
     [SerializeField] float acceleration = 10f;
+    [SerializeField] float stopAcceleration = 10f;
     [SerializeField] float xSpeed = 1f;
 
     //todo remove it!
     [SerializeField] CinemachineVirtualCamera virtualCamera;
 
     public float currentSpeed = 0f;
-    float minSpeed = 0.1f;
+    float prevSpeed = 0f;
+    float minSpeed = 0f;
 
     // [SerializeField] 
     float angleRotationSpeed = 100f;
@@ -68,18 +70,22 @@ public class PlayerScript : MonoBehaviour
 
     void Move()
     {
-        if (Mathf.Abs(angle) == 90)
-        {
-            currentSpeed = 0f;
-        }
-        else if (Mathf.Abs(angle) > 60)
+        float abs_angle = Mathf.Abs(angle);
+        prevSpeed = currentSpeed;
+
+        // if (abs_angle == 90)
+        // {
+        //     // currentSpeed = 0f;
+        // }
+        if (abs_angle > 75)
         {
             // slow down
             // todo change to slow down depend on angle
             // float slowAcceleration = acceleration * 
-            currentSpeed = Mathf.Max(currentSpeed - Time.deltaTime * acceleration, minSpeed);
+            currentSpeed -= Time.deltaTime * Mathf.Sin(Mathf.Deg2Rad * abs_angle) * stopAcceleration;
+            currentSpeed = Mathf.Max(currentSpeed, minSpeed);
         }
-        else if (Mathf.Abs(angle) > 30)
+        else if (abs_angle > 30)
         {
             // do not change speed
         }
@@ -88,6 +94,7 @@ public class PlayerScript : MonoBehaviour
             currentSpeed += Time.deltaTime * acceleration;
         }
 
+        // todo на самом деле направление движения по оси х не определятся углом (так как в реальности ты вряд ли поедешь под 90 на склоне)
         Vector3 transaltion = new Vector3(Mathf.Sin(Mathf.Deg2Rad * angle * 2) * currentSpeed, -currentSpeed, 0) * Time.deltaTime;
         transform.Translate(transaltion, Space.World);
     }
@@ -95,6 +102,12 @@ public class PlayerScript : MonoBehaviour
     void UpdateCamera()
     {
         //todo move to separate script
-        virtualCamera.m_Lens.OrthographicSize = minOrthographicSize + currentSpeed / 4;
+        var targetSize = minOrthographicSize + Mathf.Max(currentSpeed - minOrthographicSize, 0f);
+        float sizeChangeSpeed;
+        if (currentSpeed == prevSpeed)
+            sizeChangeSpeed = 0f;
+        else
+            sizeChangeSpeed = Mathf.Abs(currentSpeed - prevSpeed) / (currentSpeed + prevSpeed);
+        virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, targetSize, 0.2f);
     }
 }

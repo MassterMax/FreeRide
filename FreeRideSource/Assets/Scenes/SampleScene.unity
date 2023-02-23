@@ -2865,7 +2865,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   board: {fileID: 1892886751}
-  acceleration: 1.5
+  acceleration: 1
+  stopAcceleration: 3
   xSpeed: 1
   virtualCamera: {fileID: 723882728}
   currentSpeed: 0
