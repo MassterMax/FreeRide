@@ -12,12 +12,12 @@ public class PlayerScript : MonoBehaviour
 
     //todo remove it!
     [SerializeField] CinemachineVirtualCamera virtualCamera;
+    CinemachineFramingTransposer framingTransposer;
 
     public float currentSpeed = 0f;
-    float prevSpeed = 0f;
     float minSpeed = 0f;
+    float maxSpeed = 30f;
 
-    // [SerializeField] 
     float angleRotationSpeed = 100f;
 
     public float angle = 0f;
@@ -28,10 +28,10 @@ public class PlayerScript : MonoBehaviour
 
     void Start()
     {
+        framingTransposer = virtualCamera.GetCinemachineComponent<CinemachineFramingTransposer>();
         virtualCamera.m_Lens.OrthographicSize = minOrthographicSize;
     }
 
-    // Update is called once per frame
     void Update()
     {
         UpdateAngle();
@@ -71,21 +71,17 @@ public class PlayerScript : MonoBehaviour
     void Move()
     {
         float abs_angle = Mathf.Abs(angle);
-        prevSpeed = currentSpeed;
+        float stop_angle = 65;
+        float ride_angle = 45;
 
-        // if (abs_angle == 90)
-        // {
-        //     // currentSpeed = 0f;
-        // }
-        if (abs_angle > 75)
+        if (abs_angle > stop_angle)
         {
             // slow down
-            // todo change to slow down depend on angle
-            // float slowAcceleration = acceleration * 
-            currentSpeed -= Time.deltaTime * Mathf.Sin(Mathf.Deg2Rad * abs_angle) * stopAcceleration;
+            // currentSpeed -= Time.deltaTime * Mathf.Sin(Mathf.Deg2Rad * abs_angle) * stopAcceleration;
+            currentSpeed -= Time.deltaTime * (abs_angle - stop_angle) / (90 - stop_angle) * stopAcceleration;
             currentSpeed = Mathf.Max(currentSpeed, minSpeed);
         }
-        else if (abs_angle > 30)
+        else if (abs_angle > ride_angle)
         {
             // do not change speed
         }
@@ -93,6 +89,8 @@ public class PlayerScript : MonoBehaviour
         {
             currentSpeed += Time.deltaTime * acceleration;
         }
+
+        currentSpeed = Mathf.Min(currentSpeed, maxSpeed);
 
         // todo на самом деле направление движения по оси х не определятся углом (так как в реальности ты вряд ли поедешь под 90 на склоне)
         Vector3 transaltion = new Vector3(Mathf.Sin(Mathf.Deg2Rad * angle * 2) * currentSpeed, -currentSpeed, 0) * Time.deltaTime;
@@ -103,11 +101,8 @@ public class PlayerScript : MonoBehaviour
     {
         //todo move to separate script
         var targetSize = minOrthographicSize + Mathf.Max(currentSpeed - minOrthographicSize, 0f);
-        float sizeChangeSpeed;
-        if (currentSpeed == prevSpeed)
-            sizeChangeSpeed = 0f;
-        else
-            sizeChangeSpeed = Mathf.Abs(currentSpeed - prevSpeed) / (currentSpeed + prevSpeed);
-        virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, targetSize, 0.2f);
+        targetSize = Mathf.Min(targetSize, maxOrthographicSize);
+        virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, targetSize, 0.05f);
+        framingTransposer.m_TrackedObjectOffset = Vector3.down * (targetSize - 2);
     }
 }
